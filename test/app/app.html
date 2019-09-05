@@ -1,0 +1,45 @@
+<script type="module" src="../../../../@polymer/polymer/polymer-legacy.js"></script>
+<link rel="import" href="../../bower_components/paper-toolbar">
+
+ <script type="module" src="../../../../@polymer/iron-demo-helpers/demo-pages-shared-styles.js"></script>
+  <script type="module" src="../../../../@polymer/iron-demo-helpers/demo-snippet.js"></script>
+  <script type="module" src="../../../../@polymer/iron-flex-layout/iron-flex-layout.js"></script>
+  <script type="module" src="../../../../@polymer/iron-icons/iron-icons.js"></script>
+  <script type="module" src="../../../../@polymer/paper-icon-button/paper-icon-button.js"></script>
+  <link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+  <script type="module" src="../../../../@polymer/paper-styles/default-theme.js"></script>
+
+<link rel="import" href="../../bower_components/paper-icon-button">
+<link rel="import" href="/src/score/score.html">
+<link rel="import" href="/src/activity/activity.html">
+<link rel="import" href="/src/board/board.html">
+
+
+
+<dom-module id="twentyone-app">
+    <template>
+        <style>
+            /*:host {*/
+                /*display: block;*/
+            /*}*/
+        </style>
+        <!--<h2>Hello [[prop1]]</h2>-->
+        <!--<div>what now</div>-->
+        <paper-toolbar>
+            <!--<paper-icon-button icon="refresh"></paper-icon-button>-->
+             <!--<span class="title">21  </span>-->
+            <!--<paper-icon-button icon="refresh"></paper-icon-button>-->
+            <!--<paper-icon-button icon="menu"></paper-icon-button>-->
+
+
+        </paper-toolbar>
+        <twentyone-score id="mytest"></twentyone-score>
+        <twentyone-activity id="mytest"></twentyone-activity>
+        <twentyone-board id="mytest">        </twentyone-board>
+
+
+    </template>
+
+    <script src="./app.js">
+    </script>
+</dom-module>
