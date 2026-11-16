@@ -1,0 +1,33 @@
+/* Game-table look: cream number tiles on green felt, gold for anything that scores.
+   One deliberate visual world, so it is the same in light and dark mode.
+   Custom properties inherit into every component's shadow DOM. */
+:root {
+  color-scheme: dark;
+  --table: #0b2a1c; /* page behind the game */
+  --felt: #145a3a; /* board surface */
+  --felt-deep: #0e4129; /* panels, empty slots */
+  --felt-line: #2a7a55; /* outlines on felt */
+  --card: #fbf6ea; /* number tiles */
+  --card-edge: #d9ccb0; /* tile thickness */
+  --ink: #1d1b16; /* text on tiles */
+  --chalk: #f1ead8; /* text on felt */
+  --chalk-dim: #a9c5b4;
+  --gold: #f4b63f; /* score, 21, level */
+  --gold-deep: #b9811c;
+  --red: #e5554f; /* timer, move dots */
+  --font-display: 'Bungee', 'Arial Black', Impact, sans-serif;
+  --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: radial-gradient(120% 90% at 50% 0%, #12402b 0%, var(--table) 70%) fixed, var(--table);
+  color: var(--chalk);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: none;
+}

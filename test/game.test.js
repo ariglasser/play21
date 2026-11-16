@@ -109,15 +109,30 @@ describe('Game', () => {
     expect(g.score).toBe(55);
   });
 
-  it('long chains fill goal dots and level up', () => {
+  it('every 21 fills a goal dot; five level up', () => {
     const g = new Game(4, () => 0);
     for (let i = 0; i < 4; i++) expect(g.addPoints(10)).toBe(false);
-    expect(g.goal).toBe(5);
-    expect(g.addPoints(10)).toBe(true);
+    expect(g.goal).toBe(4);
+    expect(g.addPoints(55)).toBe(true);
     expect(g.level).toBe(2);
-    expect(g.goal).toBe(1);
-    expect(g.addPoints(55)).toBe(false); // a quick 21 gives points, not a goal dot
-    expect(g.goal).toBe(1);
+    expect(g.goal).toBe(0);
+    expect(g.score).toBe(95);
+  });
+
+  it('drops the previewed next number', () => {
+    const g = new Game(4);
+    const next = g.next;
+    const i = g.spawn();
+    expect(g.cells[i].n).toBe(next);
+    expect(g.next).toBeGreaterThanOrEqual(1);
+    expect(g.next).toBeLessThanOrEqual(10);
+  });
+
+  it('previews the points a 21 would give', () => {
+    const g = board(['3 . 7 .', '. . . .', '. . . .', '. . . .']);
+    expect(g.preview(0, 2)).toMatchObject({ value: 21, points: 55 });
+    g.place([[0, 4]]);
+    expect(g.free).toBe(15);
   });
 
   it('is over when a number cannot be placed', () => {

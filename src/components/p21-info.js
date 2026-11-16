@@ -3,18 +3,23 @@ import { keyed } from 'lit/directives/keyed.js';
 import { icon } from '../icons.js';
 
 /**
- * Header panel: toolbar, level/goal dots, score, turn timer and the current expression.
+ * Header panel: logo, toolbar, level/goal dots, score and best, next number,
+ * turn timer and the current expression.
  *
- * Events: p21-toggle-play, p21-new-game, p21-toggle-size, p21-toggle-sound
+ * Events: p21-toggle-play, p21-new-game, p21-toggle-size, p21-toggle-sound, p21-help
  */
 export class P21Info extends LitElement {
   static properties = {
     score: { type: Number },
+    best: { type: Number },
     level: { type: Number },
     goal: { type: Number },
+    next: { type: Number },
     message: { type: String },
     size: { type: Number },
     sound: { type: Boolean },
+    /** Board is nearly full: the timer turns urgent. */
+    danger: { type: Boolean },
     /** { running, started, duration, turn } from the app's TurnTimer */
     timer: { attribute: false },
   };
@@ -23,134 +28,188 @@ export class P21Info extends LitElement {
     :host {
       display: flex;
       flex-direction: column;
-      gap: 2cqi;
-      padding: 3cqi;
+      gap: 3cqi;
+      padding: 4cqi 4cqi 2cqi;
       box-sizing: border-box;
       container-type: inline-size;
+      color: var(--chalk);
     }
     .top {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
+      gap: 2cqi;
+    }
+    .brand {
+      display: flex;
       align-items: center;
+      gap: 2.5cqi;
+      background: none;
+      border: 0;
+      padding: 0;
+      color: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+    .logo {
+      font-family: var(--font-display);
+      font-size: 15cqi;
+      line-height: 0.8;
+      color: var(--gold);
+      text-shadow:
+        0 0.05em 0 var(--gold-deep),
+        0 0.1em 0.2em #0008;
+    }
+    .tagline {
+      font-size: 3.6cqi;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--chalk-dim);
+      max-width: 19cqi;
+    }
+    .tagline strong {
+      display: block;
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 5.4cqi;
+      color: var(--chalk);
+      letter-spacing: 0.04em;
     }
     .toolbar {
       display: flex;
-      gap: 1cqi;
+      justify-content: flex-end;
+      gap: 1.2cqi;
     }
-    button {
+    button.icon {
       display: inline-grid;
       place-items: center;
-      width: 11cqi;
-      height: 11cqi;
-      max-width: 48px;
-      max-height: 48px;
+      width: 8.4cqi;
+      height: 8.4cqi;
+      max-width: 44px;
+      max-height: 44px;
+      min-width: 30px;
+      min-height: 30px;
       padding: 0;
       border: 0;
       border-radius: 50%;
-      background: none;
-      color: #333;
+      background: var(--felt-deep);
+      color: var(--chalk);
       cursor: pointer;
+      box-shadow: inset 0 0 0 1px var(--felt-line);
     }
-    button:hover {
-      background: #0001;
+    button.icon:hover {
+      background: var(--felt);
     }
     button:focus-visible {
-      outline: 2px solid #6200ea;
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
     }
-    button svg {
-      width: 60%;
-      height: 60%;
-    }
-    .instructions {
-      font-size: 4.5cqi;
-      color: #444;
-    }
-    .logo {
-      font-size: 22cqi;
-      font-weight: 900;
-      line-height: 0.9;
-      width: auto;
-      height: auto;
-      max-width: none;
-      max-height: none;
-      border-radius: 2cqi;
-      color: #1a1a2e;
+    button.icon svg {
+      width: 58%;
+      height: 58%;
     }
     .stats {
-      display: flex;
-      gap: 2cqi;
-      height: 20cqi;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 2.5cqi;
     }
-    .section {
-      background: #9e9e9e;
-      color: #111;
-      border-radius: 2.5cqi;
-      padding: 1.5cqi 2.5cqi;
-      display: flex;
-      flex-direction: column;
-      font-size: 4cqi;
-    }
-    .level {
-      flex-direction: row;
-      gap: 2cqi;
-    }
-    .level > div {
+    .stat {
+      background: var(--felt-deep);
+      border-radius: 3cqi;
+      padding: 2cqi 3cqi;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
+      gap: 1cqi;
+      min-width: 0;
+      box-shadow: inset 0 0 0 1px var(--felt-line);
     }
-    .score {
-      flex: 1;
+    .name {
+      font-size: 3cqi;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--chalk-dim);
     }
     .value {
-      font-size: 11cqi;
+      font-family: var(--font-display);
+      font-size: 9cqi;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .score .value {
+      color: var(--gold);
+    }
+    .best {
+      font-size: 3.2cqi;
       font-weight: 700;
-      flex: 1;
-      display: flex;
-      align-items: center;
+      color: var(--chalk-dim);
     }
     .dots {
       display: flex;
-      flex-direction: column-reverse;
-      justify-content: center;
-      gap: 0.8cqi;
+      gap: 1cqi;
     }
     .dot {
-      width: 2cqi;
-      height: 2cqi;
+      width: 2.4cqi;
+      height: 2.4cqi;
       border-radius: 50%;
-      border: 2px solid pink;
+      box-shadow: inset 0 0 0 2px var(--gold);
     }
     .dot.on {
-      background: pink;
+      background: var(--gold);
+    }
+    .next {
+      align-items: center;
+    }
+    .mini {
+      display: grid;
+      place-items: center;
+      width: 10cqi;
+      height: 10cqi;
+      border-radius: 1.8cqi;
+      background: linear-gradient(180deg, #fffdf6, var(--card));
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-size: 5.5cqi;
+      box-shadow: 0 0.6cqi 0 var(--card-edge);
     }
     .timer {
-      width: 6cqi;
-      display: flex;
-      align-items: flex-end;
-      border-radius: 1.5cqi;
-      background: #eee;
+      height: 2.2cqi;
+      border-radius: 99px;
+      background: var(--felt-deep);
+      box-shadow: inset 0 0 0 1px var(--felt-line);
       overflow: hidden;
       cursor: pointer;
     }
     .bar {
       width: 100%;
       height: 100%;
-      background: #e53935;
-      transform-origin: bottom;
+      background: var(--chalk-dim);
+      transform-origin: left;
+      border-radius: inherit;
     }
     .bar.run {
       animation: drain linear forwards;
+      background: var(--red);
+    }
+    .danger .bar.run {
+      background: var(--red);
+      box-shadow: 0 0 10px var(--red);
     }
     @keyframes drain {
       to {
-        transform: scaleY(0.01);
+        transform: scaleX(0);
       }
     }
     .message {
-      min-height: 1.3em;
-      font-size: 8cqi;
-      font-weight: 700;
+      min-height: 1.25em;
+      font-size: 6cqi;
+      font-weight: 800;
       text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .danger-note {
+      color: var(--red);
     }
   `;
 
@@ -163,74 +222,74 @@ export class P21Info extends LitElement {
     this.dispatchEvent(new CustomEvent(name, { bubbles: true, composed: true }));
   }
 
+  #button(name, label, event, pressed) {
+    return html`<button
+      class="icon"
+      aria-label=${label}
+      title=${label}
+      aria-pressed=${pressed ?? 'false'}
+      @click=${() => this.#emit(event)}
+    >
+      ${icon(name)}
+    </button>`;
+  }
+
   render() {
     const t = this.timer ?? {};
+    const other = this.size === 5 ? 4 : 5;
     return html`
       <div class="top">
-        <div>
-          <div class="toolbar">
-            <button
-              aria-label=${t.running ? 'Pause' : 'Play'}
-              title=${t.running ? 'Pause' : 'Play'}
-              @click=${() => this.#emit('p21-toggle-play')}
-            >
-              ${icon(t.running ? 'pause' : 'play')}
-            </button>
-            <button aria-label="New game" title="New game" @click=${() => this.#emit('p21-new-game')}>
-              ${icon('replay')}
-            </button>
-            <button
-              aria-label="Board size ${this.size}×${this.size}"
-              title="Switch to ${this.size === 5 ? 4 : 5}×${this.size === 5 ? 4 : 5}"
-              @click=${() => this.#emit('p21-toggle-size')}
-            >
-              ${icon('grid')}
-            </button>
-            <button
-              aria-label=${this.sound ? 'Mute' : 'Unmute'}
-              title=${this.sound ? 'Mute' : 'Unmute'}
-              aria-pressed=${this.sound}
-              @click=${() => this.#emit('p21-toggle-sound')}
-            >
-              ${icon(this.sound ? 'volumeOn' : 'volumeOff')}
-            </button>
-          </div>
-          <div class="instructions">move the numbers to make</div>
+        <button class="brand" title="New game" @click=${() => this.#emit('p21-new-game')}>
+          <span class="logo">21</span>
+          <span class="tagline"><strong>Play</strong>slide numbers to make 21</span>
+        </button>
+        <div class="toolbar">
+          ${this.#button(t.running ? 'pause' : 'play', t.running ? 'Pause' : 'Play', 'p21-toggle-play')}
+          ${this.#button('replay', 'New game', 'p21-new-game')}
+          ${this.#button('grid', `Switch to ${other}×${other}`, 'p21-toggle-size')}
+          ${this.#button(this.sound ? 'volumeOn' : 'volumeOff', this.sound ? 'Mute' : 'Unmute', 'p21-toggle-sound', String(!!this.sound))}
+          ${this.#button('help', 'How to play', 'p21-help')}
         </div>
-        <button class="logo" title="New game" @click=${() => this.#emit('p21-new-game')}>21</button>
       </div>
 
       <div class="stats">
-        <div class="section level">
-          <div>
-            <span>Level</span>
-            <span class="value">${this.level}</span>
-          </div>
-          <div class="dots" aria-label="Goal ${this.goal} of 5">
-            ${[1, 2, 3, 4, 5].map((i) => html`<span class="dot ${i <= this.goal ? 'on' : ''}"></span>`)}
-          </div>
+        <div class="stat">
+          <span class="name">Level</span>
+          <span class="value">${this.level}</span>
+          <span class="dots" title="Make 5 × 21 to reach the next level" aria-label="${this.goal} of 5 to next level">
+            ${[0, 1, 2, 3, 4].map((i) => html`<span class="dot ${i < this.goal ? 'on' : ''}"></span>`)}
+          </span>
         </div>
-        <div class="section score">
-          <span>Score</span>
+        <div class="stat score">
+          <span class="name">Score</span>
           <span class="value">${this.score}</span>
+          <span class="best">Best ${Math.max(this.best ?? 0, this.score ?? 0)}</span>
         </div>
-        <div
-          class="timer"
-          role="progressbar"
-          aria-label="Time until the next number"
-          @click=${() => this.#emit('p21-toggle-play')}
-        >
-          ${keyed(
-            t.turn,
-            html`<div
-              class="bar ${t.started ? 'run' : ''}"
-              style="animation-duration:${t.duration}ms;animation-play-state:${t.running ? 'running' : 'paused'}"
-            ></div>`,
-          )}
+        <div class="stat next">
+          <span class="name">Next</span>
+          <span class="mini" aria-label="Next number ${this.next}">${this.next}</span>
         </div>
       </div>
 
-      <div class="message" aria-live="polite">${this.message}</div>
+      <div
+        class="timer ${this.danger ? 'danger' : ''}"
+        role="progressbar"
+        aria-label="Time until the next number drops"
+        title=${t.running ? 'Pause' : 'Play'}
+        @click=${() => this.#emit('p21-toggle-play')}
+      >
+        ${keyed(
+          t.turn,
+          html`<div
+            class="bar ${t.started ? 'run' : ''}"
+            style="animation-duration:${t.duration}ms;animation-play-state:${t.running ? 'running' : 'paused'}"
+          ></div>`,
+        )}
+      </div>
+
+      <div class="message ${this.danger && !this.message ? 'danger-note' : ''}" aria-live="polite">
+        ${this.message || (this.danger ? 'Board almost full!' : '')}
+      </div>
     `;
   }
 }

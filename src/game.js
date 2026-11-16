@@ -85,11 +85,13 @@ export class Game {
     this.cells = Array(size * size).fill(null);
     this.score = 0;
     this.level = 1;
-    this.goal = 1;
+    /** 21s made this level; five of them level you up. */
+    this.goal = 0;
     this.over = false;
     /** The last merge, while its operator can still be changed with a tap. */
     this.pending = null;
     this.lastText = '';
+    this.next = this.#roll();
     for (let i = 0; i < START_NUMBERS; i++) this.spawn();
   }
 
@@ -101,7 +103,25 @@ export class Game {
     return row * this.size + col;
   }
 
-  /** Put a random 1–10 in a random empty cell. Returns its index, or -1 (game over). */
+  #roll() {
+    return Math.floor(this.rng() * 10) + 1;
+  }
+
+  /** Replace the board with hand-placed numbers, e.g. [[index, number], ...] (used by the tutorial). */
+  place(numbers) {
+    this.cells = this.cells.map(() => null);
+    for (const [i, n] of numbers) this.cells[i] = { id: ++this.seq, n, moves: 0, chain: n, fresh: true };
+    this.pending = null;
+    this.over = false;
+    this.lastText = '';
+  }
+
+  /** Empty cells left on the board. */
+  get free() {
+    return this.cells.filter((c) => !c).length;
+  }
+
+  /** Put the `next` number (1–10) in a random empty cell. Returns its index, or -1 (game over). */
   spawn() {
     const empty = [];
     this.cells.forEach((c, i) => c || empty.push(i));
@@ -111,7 +131,8 @@ export class Game {
       return -1;
     }
     const i = empty[Math.floor(this.rng() * empty.length)];
-    const n = Math.floor(this.rng() * 10) + 1;
+    const n = this.next;
+    this.next = this.#roll();
     this.cells[i] = { id: ++this.seq, n, moves: 0, chain: n, fresh: true };
     return i;
   }
@@ -159,7 +180,8 @@ export class Game {
     const target = to === undefined || to === from ? null : this.cells[to];
     if (!target) return { value: origin.n, text: String(origin.n) };
     const { op, value } = bestOp(origin.n, target.n);
-    return { op, value, text: `${expression(origin.n, target.n, op)} = ${value}` };
+    const points = value === TARGET ? pointsFor(origin.moves + target.moves + 1) : 0;
+    return { op, value, points, text: `${expression(origin.n, target.n, op)} = ${value}` };
   }
 
   /**
@@ -210,16 +232,14 @@ export class Game {
     return true;
   }
 
-  /** Add points; a low-scoring (long) chain fills a goal dot. Returns true on level up. */
+  /** Add points for a 21; every 21 fills a goal dot. Returns true on level up. */
   addPoints(points) {
     this.score += points;
-    if (points < 40) {
-      this.goal++;
-      if (this.goal > GOALS_PER_LEVEL) {
-        this.goal = 1;
-        this.level++;
-        return true;
-      }
+    this.goal++;
+    if (this.goal >= GOALS_PER_LEVEL) {
+      this.goal = 0;
+      this.level++;
+      return true;
     }
     return false;
   }

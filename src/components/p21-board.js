@@ -8,13 +8,15 @@ const DRAG_THRESHOLD = 6; // px before a press becomes a drag
  * The grid. Reads the Game it is given but never changes it: it reports what the
  * player did with events, and the app applies them.
  *
- * Events: p21-drop {from, to}, p21-tap {index}, p21-preview {text|null}, p21-new-game
+ * Events: p21-drop {from, to}, p21-tap {index}, p21-preview {text|null}
  */
 export class P21Board extends LitElement {
   static properties = {
     game: { attribute: false },
     /** Bumped by the app whenever the game changes, to trigger a render. */
     revision: { type: Number },
+    /** Cells to point out (tutorial). */
+    hints: { attribute: false },
     _drag: { state: true },
   };
 
@@ -23,6 +25,7 @@ export class P21Board extends LitElement {
       display: block;
       position: relative;
       aspect-ratio: 1;
+      max-width: 100%;
       container-type: inline-size;
       touch-action: none;
       user-select: none;
@@ -34,7 +37,7 @@ export class P21Board extends LitElement {
       grid-template-rows: repeat(var(--size), 1fr);
       width: 100%;
       height: 100%;
-      --tile-font: calc(100cqi / var(--size) * 0.36);
+      --tile-font: calc(100cqi / var(--size) * 0.38);
     }
     .ghost {
       position: absolute;
@@ -42,10 +45,11 @@ export class P21Board extends LitElement {
       top: 0;
       z-index: 2;
       pointer-events: none;
-      padding: calc(100% / var(--size) * 0.1);
+      padding: calc(100% / var(--size) * 0.07);
       box-sizing: border-box;
       width: calc(100% / var(--size));
       height: calc(100% / var(--size));
+      --tile-font: calc(100cqi / var(--size) * 0.38);
     }
     .ghost[hidden] {
       display: none;
@@ -53,44 +57,38 @@ export class P21Board extends LitElement {
     .ghost div {
       width: 100%;
       height: 100%;
-      border-radius: 18%;
-      background: #616161;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-weight: 800;
-      font-size: var(--tile-font);
-      box-shadow: 0 6px 16px #0005;
-      transform: scale(1.08);
-    }
-    .ghost div.expr {
-      background: #2e7d32;
-      font-size: calc(var(--tile-font) * 0.42);
-      line-height: 1.1;
-    }
-    .over {
-      position: absolute;
-      inset: 0;
-      z-index: 3;
+      border-radius: 16%;
+      background: linear-gradient(180deg, #fffdf6, var(--card));
+      color: var(--ink);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.5em;
-      background: #fffd;
-      border: 0;
-      border-radius: inherit;
-      font: inherit;
-      font-size: 9cqi;
-      font-weight: 800;
-      cursor: pointer;
-      color: #1a1a2e;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: var(--tile-font);
+      line-height: 1;
+      box-shadow:
+        0 0.35em 0 -0.05em var(--card-edge),
+        0 0.9em 1.2em -0.2em #000a;
+      transform: translateY(-8%) rotate(-4deg) scale(1.1);
     }
-    .over small {
-      font-size: 0.45em;
-      font-weight: 500;
+    .ghost div.expr {
+      font-family: var(--font-body);
+      font-weight: 800;
+      font-size: calc(var(--tile-font) * 0.4);
+      line-height: 1.15;
+    }
+    .ghost div.win {
+      background: linear-gradient(180deg, #ffd77a, var(--gold));
+      box-shadow:
+        0 0.35em 0 -0.05em var(--gold-deep),
+        0 0 1.6em var(--gold);
+    }
+    .ghost b {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.5em;
     }
   `;
 
@@ -118,6 +116,7 @@ export class P21Board extends LitElement {
           else if (drag && drag.over === i) state = 'over';
           else if (reach?.has(i)) state = 'reach';
           else if (!drag && pending?.index === i) state = 'pending';
+          else if (!drag && this.hints?.includes(i)) state = 'hint';
           return html`<p21-cell
             .number=${cell?.n}
             .moves=${cell?.moves ?? 0}
@@ -129,13 +128,10 @@ export class P21Board extends LitElement {
         })}
       </div>
       <div class="ghost" style="--size:${game.size}" ?hidden=${!drag}>
-        <div class=${drag?.expr ? 'expr' : ''}>${drag?.label}</div>
+        <div class="${drag?.expr ? 'expr' : ''} ${drag?.points ? 'win' : ''}">
+          ${drag?.label}${drag?.points ? html`<b>+${drag.points}</b>` : ''}
+        </div>
       </div>
-      ${game.over
-        ? html`<button class="over" @click=${() => this.#emit('p21-new-game')}>
-            Game over <small>tap to play again</small>
-          </button>`
-        : ''}
     `;
   }
 
@@ -262,7 +258,13 @@ export class P21Board extends LitElement {
     if (this._drag.over === over) return;
     const preview = this.game.preview(this._drag.from, over);
     const merging = over !== this._drag.from && !!this.game.cells[over];
-    this._drag = { ...this._drag, over, label: merging ? preview.text : preview.value, expr: merging };
+    this._drag = {
+      ...this._drag,
+      over,
+      label: merging ? preview.text : preview.value,
+      expr: merging,
+      points: merging ? preview.points : 0,
+    };
     this.#emit('p21-preview', { text: preview.text });
   }
 
