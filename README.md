@@ -6,8 +6,8 @@ Slide numbers along a row or column and combine them to make **21**.
 - The operator (`+ - × ÷`) closest to 21 is picked for you. Tap the green cell to try the next one.
 - Making 21 clears the cell and scores. Red dots on a tile count its moves; fewer moves score more.
 - Every 21 fills a level dot; five of them take you to the next, faster level.
-- A new number (shown under **Next**) drops in after every move and whenever the timer runs out. The game ends when the board is full.
-- First launch runs a short tutorial; replay it with the **?** button. Your best score is kept on the device.
+- A new number drops in after every move. In **Timed** mode one also drops whenever the timer runs out; **Endless** mode has no timer. The game ends when the board is full.
+- First launch runs a short tutorial; replay it with the **?** button. Your best score is kept on the device, per mode.
 
 Built with [Lit](https://lit.dev) web components and [Vite](https://vite.dev).
 

@@ -49,6 +49,6 @@ export const STEPS = [
     allow: [],
     until: 'button',
     button: 'Start playing',
-    text: 'Red dots count moves; fewer moves score more. A new number drops after every move and when the timer runs out. Keep the board from filling up!',
+    text: 'Red dots count moves; fewer moves score more. A new number drops after every move, and in Timed mode also when the timer runs out. Prefer no clock? Pick Endless. Keep the board from filling up!',
   },
 ];

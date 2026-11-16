@@ -119,15 +119,6 @@ describe('Game', () => {
     expect(g.score).toBe(95);
   });
 
-  it('drops the previewed next number', () => {
-    const g = new Game(4);
-    const next = g.next;
-    const i = g.spawn();
-    expect(g.cells[i].n).toBe(next);
-    expect(g.next).toBeGreaterThanOrEqual(1);
-    expect(g.next).toBeLessThanOrEqual(10);
-  });
-
   it('previews the points a 21 would give', () => {
     const g = board(['3 . 7 .', '. . . .', '. . . .', '. . . .']);
     expect(g.preview(0, 2)).toMatchObject({ value: 21, points: 55 });

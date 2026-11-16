@@ -91,7 +91,6 @@ export class Game {
     /** The last merge, while its operator can still be changed with a tap. */
     this.pending = null;
     this.lastText = '';
-    this.next = this.#roll();
     for (let i = 0; i < START_NUMBERS; i++) this.spawn();
   }
 
@@ -121,7 +120,7 @@ export class Game {
     return this.cells.filter((c) => !c).length;
   }
 
-  /** Put the `next` number (1–10) in a random empty cell. Returns its index, or -1 (game over). */
+  /** Put a random 1–10 in a random empty cell. Returns its index, or -1 (game over). */
   spawn() {
     const empty = [];
     this.cells.forEach((c, i) => c || empty.push(i));
@@ -131,8 +130,7 @@ export class Game {
       return -1;
     }
     const i = empty[Math.floor(this.rng() * empty.length)];
-    const n = this.next;
-    this.next = this.#roll();
+    const n = this.#roll();
     this.cells[i] = { id: ++this.seq, n, moves: 0, chain: n, fresh: true };
     return i;
   }

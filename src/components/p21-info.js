@@ -1,12 +1,13 @@
-import { LitElement, css, html } from 'lit';
+import { LitElement, css, html, nothing } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { icon } from '../icons.js';
 
 /**
- * Header panel: logo, toolbar, level/goal dots, score and best, next number,
- * turn timer and the current expression.
+ * Header panel: logo, toolbar, level/goal dots, score and best, game mode,
+ * turn timer (timed mode) and the current expression.
  *
- * Events: p21-toggle-play, p21-new-game, p21-toggle-size, p21-toggle-sound, p21-help
+ * Events: p21-toggle-play, p21-new-game, p21-toggle-size, p21-toggle-sound, p21-help,
+ *         p21-mode {mode: 'timed' | 'endless'}
  */
 export class P21Info extends LitElement {
   static properties = {
@@ -14,7 +15,8 @@ export class P21Info extends LitElement {
     best: { type: Number },
     level: { type: Number },
     goal: { type: Number },
-    next: { type: Number },
+    /** 'timed' | 'endless' */
+    mode: { type: String },
     message: { type: String },
     size: { type: Number },
     sound: { type: Boolean },
@@ -158,20 +160,34 @@ export class P21Info extends LitElement {
     .dot.on {
       background: var(--gold);
     }
-    .next {
-      align-items: center;
+    .modes {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2cqi;
+      justify-content: center;
     }
-    .mini {
-      display: grid;
-      place-items: center;
-      width: 10cqi;
-      height: 10cqi;
-      border-radius: 1.8cqi;
-      background: linear-gradient(180deg, #fffdf6, var(--card));
+    .modes button {
+      display: flex;
+      align-items: center;
+      gap: 1.2cqi;
+      padding: 1cqi 2.4cqi 1cqi 1.6cqi;
+      border: 0;
+      border-radius: 99px;
+      background: none;
+      color: var(--chalk-dim);
+      font: inherit;
+      font-size: 3.4cqi;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .modes button svg {
+      width: 4.4cqi;
+      height: 4.4cqi;
+    }
+    .modes button[aria-checked='true'] {
+      background: var(--gold);
       color: var(--ink);
-      font-family: var(--font-display);
-      font-size: 5.5cqi;
-      box-shadow: 0 0.6cqi 0 var(--card-edge);
+      box-shadow: 0 0.5cqi 0 var(--gold-deep);
     }
     .timer {
       height: 2.2cqi;
@@ -234,9 +250,23 @@ export class P21Info extends LitElement {
     </button>`;
   }
 
+  #mode(value, iconName, label, title) {
+    return html`<button
+      role="radio"
+      aria-checked=${String(this.mode === value)}
+      title=${title}
+      @click=${() =>
+        this.mode !== value &&
+        this.dispatchEvent(new CustomEvent('p21-mode', { detail: { mode: value }, bubbles: true, composed: true }))}
+    >
+      ${icon(iconName)} ${label}
+    </button>`;
+  }
+
   render() {
     const t = this.timer ?? {};
     const other = this.size === 5 ? 4 : 5;
+    const endless = this.mode === 'endless';
     return html`
       <div class="top">
         <button class="brand" title="New game" @click=${() => this.#emit('p21-new-game')}>
@@ -244,7 +274,7 @@ export class P21Info extends LitElement {
           <span class="tagline"><strong>Play</strong>slide numbers to make 21</span>
         </button>
         <div class="toolbar">
-          ${this.#button(t.running ? 'pause' : 'play', t.running ? 'Pause' : 'Play', 'p21-toggle-play')}
+          ${endless ? nothing : this.#button(t.running ? 'pause' : 'play', t.running ? 'Pause' : 'Play', 'p21-toggle-play')}
           ${this.#button('replay', 'New game', 'p21-new-game')}
           ${this.#button('grid', `Switch to ${other}×${other}`, 'p21-toggle-size')}
           ${this.#button(this.sound ? 'volumeOn' : 'volumeOff', this.sound ? 'Mute' : 'Unmute', 'p21-toggle-sound', String(!!this.sound))}
@@ -265,13 +295,15 @@ export class P21Info extends LitElement {
           <span class="value">${this.score}</span>
           <span class="best">Best ${Math.max(this.best ?? 0, this.score ?? 0)}</span>
         </div>
-        <div class="stat next">
-          <span class="name">Next</span>
-          <span class="mini" aria-label="Next number ${this.next}">${this.next}</span>
+        <div class="stat modes" role="radiogroup" aria-label="Game mode">
+          ${this.#mode('timed', 'timer', 'Timed', 'A number also drops when the timer runs out')}
+          ${this.#mode('endless', 'endless', 'Endless', 'No timer: a number drops only after each move')}
         </div>
       </div>
 
-      <div
+      ${endless
+        ? nothing
+        : html`<div
         class="timer ${this.danger ? 'danger' : ''}"
         role="progressbar"
         aria-label="Time until the next number drops"
@@ -285,7 +317,7 @@ export class P21Info extends LitElement {
             style="animation-duration:${t.duration}ms;animation-play-state:${t.running ? 'running' : 'paused'}"
           ></div>`,
         )}
-      </div>
+      </div>`}
 
       <div class="message ${this.danger && !this.message ? 'danger-note' : ''}" aria-live="polite">
         ${this.message || (this.danger ? 'Board almost full!' : '')}

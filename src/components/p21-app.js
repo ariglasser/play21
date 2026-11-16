@@ -18,6 +18,8 @@ export class P21App extends LitElement {
     _step: { state: true },
     _best: { state: true },
     _newBest: { state: true },
+    /** 'timed' | 'endless' */
+    _mode: { state: true },
   };
 
   static styles = css`
@@ -221,7 +223,8 @@ export class P21App extends LitElement {
     this._revision = 0;
     this._preview = null;
     this._sound = sound.enabled;
-    this._best = Number(store.get('best')) || 0;
+    this._mode = store.get('mode') === 'endless' ? 'endless' : 'timed';
+    this._best = this.#loadBest();
     this._newBest = false;
     this._step = store.get('tutorial') === 'done' ? -1 : 0;
   }
@@ -231,12 +234,28 @@ export class P21App extends LitElement {
     if (this._step >= 0) this.#startStep(0);
   }
 
+  // Best score is kept per mode ('best' is the key used before modes existed).
+  #loadBest() {
+    return Number(store.get(`best-${this._mode}`) ?? (this._mode === 'timed' ? store.get('best') : 0)) || 0;
+  }
+
+  get #timed() {
+    return this._mode === 'timed';
+  }
+
+  /** Start the turn timer, in timed mode only. */
+  #startTimer() {
+    if (this.#timed) this.timer.start(levelTime(this.game.level));
+    else this.timer.stop();
+  }
+
   get #tutorial() {
     return this._step >= 0 ? STEPS[this._step] : null;
   }
 
   get #danger() {
-    return !this.#tutorial && !this.game.over && this.timer.started && this.game.free <= DANGER_FREE;
+    const playing = this.#timed ? this.timer.started : true;
+    return !this.#tutorial && !this.game.over && playing && this.game.free <= DANGER_FREE;
   }
 
   render() {
@@ -249,7 +268,7 @@ export class P21App extends LitElement {
           .best=${this._best}
           .level=${g.level}
           .goal=${g.goal}
-          .next=${g.next}
+          .mode=${this._mode}
           .size=${g.size}
           .message=${this._preview ?? g.lastText}
           .sound=${this._sound}
@@ -265,6 +284,7 @@ export class P21App extends LitElement {
           @p21-toggle-size=${() => this.#newGame(g.size === 5 ? 4 : 5, false)}
           @p21-toggle-sound=${this.#toggleSound}
           @p21-help=${() => this.#startStep(0)}
+          @p21-mode=${this.#setMode}
         ></p21-info>
         ${step ? this.#coach(step) : nothing}
         <div class="table ${this.#danger ? 'danger' : ''}">
@@ -305,7 +325,7 @@ export class P21App extends LitElement {
         ${this._newBest
           ? html`<span class="badge">New best</span>`
           : html`<div class="sub">Best ${this._best}</div>`}
-        <div class="sub">Level ${this.game.level}</div>
+        <div class="sub">Level ${this.game.level} · ${this.#timed ? 'Timed' : 'Endless'}</div>
         <button class="primary" @click=${() => this.#newGame(this.game.size, true)}>Play again</button>
       </div>
     </div>`;
@@ -350,12 +370,12 @@ export class P21App extends LitElement {
       this._newBest = this.game.score > this._best;
       if (this._newBest) {
         this._best = this.game.score;
-        store.set('best', String(this._best));
+        store.set(`best-${this._mode}`, String(this._best));
       }
       sound.play('gameover');
     } else {
       sound.play('newnumber');
-      this.timer.start(levelTime(this.game.level));
+      this.#startTimer();
     }
     this.#changed();
   }
@@ -391,7 +411,7 @@ export class P21App extends LitElement {
   }
 
   #togglePlay() {
-    if (this.game.over || this.#tutorial) return;
+    if (this.game.over || this.#tutorial || !this.#timed) return;
     const t = this.timer;
     if (!t.started) t.start(levelTime(this.game.level));
     else if (t.running) {
@@ -409,12 +429,20 @@ export class P21App extends LitElement {
     this._preview = null;
     this._newBest = false;
     if (autostart) {
-      this.timer.start(levelTime(this.game.level));
+      this.#startTimer();
       sound.play('gamestart');
     } else {
       this.timer.stop();
     }
     this.#changed();
+  }
+
+  /** Switching mode starts a fresh game in that mode. */
+  #setMode(e) {
+    this._mode = e.detail.mode;
+    store.set('mode', this._mode);
+    this._best = this.#loadBest();
+    this.#newGame(this.game.size, true);
   }
 
   #toggleSound() {
