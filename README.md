@@ -9,7 +9,10 @@ Slide numbers along a row or column and combine them to make **21**.
 - A new number drops in after every move. In **Timed** mode one also drops whenever the timer runs out; **Endless** mode has no timer. The game ends when the board is full.
 - First launch runs a short tutorial; replay it with the **?** button. Your best score is kept on the device, per mode.
 
-Built with [Lit](https://lit.dev) web components and [Vite](https://vite.dev).
+Built with [Lit](https://lit.dev) web components and [Vite](https://vite.dev). It's an installable PWA
+that works offline.
+
+**Play:** https://ariglasser.github.io/play21/
 
 ## Develop
 
@@ -20,6 +23,12 @@ npm test         # game-rule unit tests (Vitest)
 npm run build    # production build in dist/
 npm run preview  # serve the build
 ```
+
+## Deploy
+
+Every push to `master` runs the tests, builds, and deploys to GitHub Pages
+(`.github/workflows/deploy.yml`). One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
+You can also run the workflow by hand from the **Actions** tab.
 
 ## Layout
 
@@ -36,4 +45,6 @@ npm run preview  # serve the build
 | `src/components/p21-cell.js` | One tile |
 | `src/components/p21-info.js` | Toolbar, level, score, timer, current expression |
 | `public/media/` | Sound files |
+| `public/icons/` | App icons (home screen, favicon) |
+| `vite.config.js` | Build + PWA manifest and offline caching |
 | `test/` | Vitest tests |
