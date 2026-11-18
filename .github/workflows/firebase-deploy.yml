@@ -1,0 +1,42 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_FIREBASE_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PLAY21_D1797 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Explain missing Firebase key
+        if: env.HAS_FIREBASE_KEY != 'true'
+        run: |
+          echo "::warning::Not deployed: add the FIREBASE_SERVICE_ACCOUNT_PLAY21_D1797 repository secret (see README → Deploy)."
+
+      - name: Deploy to play21-d1797 (live)
+        if: env.HAS_FIREBASE_KEY == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PLAY21_D1797 }}
+          projectId: play21-d1797
+          channelId: live
