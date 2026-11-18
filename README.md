@@ -12,7 +12,7 @@ Slide numbers along a row or column and combine them to make **21**.
 Built with [Lit](https://lit.dev) web components and [Vite](https://vite.dev). It's an installable PWA
 that works offline.
 
-**Play:** https://ariglasser.github.io/play21/
+**Play:** https://play21-d1797.firebaseapp.com/
 
 ## Develop
 
@@ -26,9 +26,22 @@ npm run preview  # serve the build
 
 ## Deploy
 
-Every push to `master` runs the tests, builds, and deploys to GitHub Pages
-(`.github/workflows/deploy.yml`). One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
-You can also run the workflow by hand from the **Actions** tab.
+The game is hosted on Firebase Hosting (project `play21-d1797`). Every push to `master` runs the
+tests, builds, and deploys `dist/` (`.github/workflows/firebase-deploy.yml`). You can also run the
+workflow by hand from the **Actions** tab.
+
+One-time setup — give GitHub a Firebase deploy key, either way:
+
+- **Easiest:** on your computer run `npx firebase-tools login` then
+  `npx firebase-tools init hosting:github`, pick this repo, and answer **No** to overwriting
+  `firebase.json` and to creating a workflow. It creates the key and saves it as the
+  `FIREBASE_SERVICE_ACCOUNT_PLAY21_D1797` repository secret for you.
+- **By hand:** Google Cloud console → IAM → Service accounts → create one with the
+  *Firebase Hosting Admin* role → Keys → Add key (JSON). Paste the whole JSON into
+  GitHub → Settings → Secrets and variables → Actions → New repository secret named
+  `FIREBASE_SERVICE_ACCOUNT_PLAY21_D1797`.
+
+Manual deploy from your computer: `npm run build && npx firebase-tools deploy --only hosting`.
 
 ## Layout
 
@@ -47,4 +60,5 @@ You can also run the workflow by hand from the **Actions** tab.
 | `public/media/` | Sound files |
 | `public/icons/` | App icons (home screen, favicon) |
 | `vite.config.js` | Build + PWA manifest and offline caching |
+| `firebase.json` | Firebase Hosting config (serves `dist/`, cache headers) |
 | `test/` | Vitest tests |
